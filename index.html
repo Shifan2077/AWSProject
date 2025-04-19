@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple File Sharing</title>
+    <style>
+        :root {
+            --primary-color: #a0430a;
+            --background-color: #dfe8e6;
+            --text-color: #333333;
+            --accent-color: #c06847;
+            --light-accent: #f1f4f3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            width: 100%;
+            max-width: 450px;
+            padding: 25px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .panel {
+                width: 100%;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .code-display {
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--light-accent);
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 3px;
+            font-weight: bold;
+            border: 2px dashed var(--primary-color);
+            border-radius: 5px;
+            color: var(--primary-color);
+        }
+
+        button {
+            padding: 12px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--accent-color);
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            margin: 15px 0;
+            width: 100%;
+        }
+
+        .file-input-container {
+            border: 2px dashed var(--primary-color);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background-color: var(--light-accent);
+        }
+
+        .file-input-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .progress {
+            height: 8px;
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        .status-message {
+            text-align: center;
+            margin: 10px 0;
+            font-style: italic;
+        }
+
+        .progress-percentage {
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 5px;
+        }
+
+        .success-message {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: var(--light-accent);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-size {
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple File Sharing</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Upload File</h2>
+            <div id="upload-form">
+                <div class="file-input-container">
+                    <label class="file-input-label" for="file-input">Select a file to share</label>
+                    <input type="file" id="file-input">
+                </div>
+                <div id="file-details" class="hidden file-info">
+                    <div class="file-name" id="selected-file-name"></div>
+                    <div class="file-size" id="selected-file-size"></div>
+                </div>
+                <button id="upload-button">Upload File</button>
+                <div id="upload-progress" class="hidden">
+                    <div class="status-message" id="upload-status">Reading file...</div>
+                    <div class="progress">
+                        <div class="progress-bar" id="upload-progress-bar"></div>
+                    </div>
+                    <div class="progress-percentage" id="upload-percentage">0%</div>
+                </div>
+                <div id="upload-result" class="hidden">
+                    <p class="success-message">Your file has been uploaded!</p>
+                    <p>Share this code with the recipient:</p>
+                    <div id="share-code" class="code-display"></div>
+                    <p><strong>Note:</strong> The file will be available for 1 hour only.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Download File</h2>
+            <div id="download-form">
+                <label for="code-input">Enter the code you received:</label>
+                <input type="text" id="code-input" placeholder="Enter code here">
+                <button id="download-button">Download File</button>
+                <div id="download-progress" class="hidden">
+                    <div class="status-message" id="download-status">Preparing download...</div>
+                    <div class="progress">
+                        <div class="progress-bar" id="download-progress-bar"></div>
+                    </div>
+                    <div class="progress-percentage" id="download-percentage">0%</div>
+                </div>
+                <div id="download-error" class="hidden">
+                    <p class="error-message">Error: File not found or invalid code.</p>
+                </div>
+                <div id="download-success" class="hidden">
+                    <p class="success-message">Download complete!</p>
+                    <div class="file-info">
+                        <div class="file-name" id="downloaded-file-name"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Replace these with your API Gateway endpoints
+        const uploadUrl = 'https://w6b79kc42g.execute-api.us-east-1.amazonaws.com/prod/upload';
+        const downloadUrl = 'https://w6b79kc42g.execute-api.us-east-1.amazonaws.com/prod/download';
+
+        // Format file size in a readable way
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Show file details when a file is selected
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('selected-file-name').textContent = file.name;
+                document.getElementById('selected-file-size').textContent = formatFileSize(file.size);
+                document.getElementById('file-details').classList.remove('hidden');
+            } else {
+                document.getElementById('file-details').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('upload-button').addEventListener('click', async () => {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            // Show progress
+            document.getElementById('upload-progress').classList.remove('hidden');
+            document.getElementById('upload-result').classList.add('hidden');
+            
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressPercentage = document.getElementById('upload-percentage');
+            const statusMessage = document.getElementById('upload-status');
+            
+            try {
+                // Read file as ArrayBuffer instead of base64
+                const reader = new FileReader();
+                
+                reader.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 50);
+                        progressBar.style.width = percent + '%';
+                        progressPercentage.textContent = percent + '%';
+                        statusMessage.textContent = `Reading file: ${percent}%`;
+                    }
+                };
+                
+                reader.onload = async function(e) {
+                    // Convert ArrayBuffer to Base64
+                    const arrayBuffer = e.target.result;
+                    const bytes = new Uint8Array(arrayBuffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.byteLength; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    const base64Content = btoa(binary);
+                    
+                    statusMessage.textContent = 'Uploading to server...';
+                    
+                    let progress = 50;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 3;
+                        if (progress > 95) {
+                            progress = 95;
+                            clearInterval(interval);
+                        }
+                        progressBar.style.width = progress + '%';
+                        progressPercentage.textContent = Math.round(progress) + '%';
+                        if (progress > 75) {
+                            statusMessage.textContent = 'Almost there...';
+                        }
+                    }, 200);
+                    
+                    try {
+                        const response = await fetch(uploadUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Origin': window.location.origin
+                            },
+                            mode: 'cors',
+                            credentials: 'omit',
+                            body: JSON.stringify({
+                                file_content: base64Content,
+                                file_name: file.name
+                            })
+                        });
+                        
+                        clearInterval(interval);
+                        progressBar.style.width = '100%';
+                        progressPercentage.textContent = '100%';
+                        statusMessage.textContent = 'Upload complete!';
+                        
+                        const result = await response.json();
+                        
+                        setTimeout(() => {
+                            if (response.ok) {
+                                document.getElementById('share-code').textContent = result.code;
+                                document.getElementById('upload-result').classList.remove('hidden');
+                                document.getElementById('upload-progress').classList.add('hidden');
+                            } else {
+                                alert('Upload failed: ' + result.error);
+                                document.getElementById('upload-progress').classList.add('hidden');
+                            }
+                        }, 800);
+                    } catch (error) {
+                        clearInterval(interval);
+                        throw error;
+                    }
+                };
+                
+                // Read as ArrayBuffer instead of DataURL
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+                document.getElementById('upload-progress').classList.add('hidden');
+            }
+        });
+
+        // Function to handle file download
+        async function downloadFile(code) {
+            try {
+                const downloadProgress = document.getElementById('download-progress');
+                const downloadError = document.getElementById('download-error');
+                const downloadSuccess = document.getElementById('download-success');
+                const downloadStatus = document.getElementById('download-status');
+                const progressBar = document.getElementById('download-progress-bar');
+                const progressPercentage = document.getElementById('download-percentage');
+                const downloadedFileName = document.getElementById('downloaded-file-name');
+
+                downloadProgress.classList.remove('hidden');
+                downloadError.classList.add('hidden');
+                downloadSuccess.classList.add('hidden');
+
+                const response = await fetch(`${downloadUrl}?code=${code}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': '*/*'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+
+                // Get the blob from the response
+                const blob = await response.blob();
+                
+                // Get the filename from the Content-Disposition header if available
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'downloaded-file';
+                if (contentDisposition) {
+                    const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (matches && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+
+                // Create a blob URL and trigger download
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                downloadProgress.classList.add('hidden');
+                downloadSuccess.classList.remove('hidden');
+                downloadedFileName.textContent = filename;
+            } catch (error) {
+                console.error('Download error:', error);
+                downloadProgress.classList.add('hidden');
+                downloadError.classList.remove('hidden');
+            }
+        }
+
+        // Add event listener to download button
+        document.getElementById('download-button').addEventListener('click', () => {
+            const code = document.getElementById('code-input').value.trim();
+            if (code) {
+                downloadFile(code);
+            }
+        });
+    </script>
+</body>
+</html>
